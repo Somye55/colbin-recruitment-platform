@@ -30,9 +30,31 @@ api.interceptors.response.use(
   (error) => {
     if (error.response?.status === 401) {
       // Token is invalid or expired
-      localStorage.removeItem('authToken');
-      window.location.href = '/login';
+      const authToken = localStorage.getItem('authToken');
+      const sessionData = localStorage.getItem('authSession');
+
+      if (authToken || sessionData) {
+        // Clear invalid session data
+        localStorage.removeItem('authToken');
+        localStorage.removeItem('authSession');
+
+        // Only redirect if we're not already on the login page
+        if (window.location.pathname !== '/login') {
+          window.location.href = '/login';
+        }
+      }
     }
+
+    // Handle network errors
+    if (!error.response) {
+      console.error('Network error:', error.message);
+    }
+
+    // Handle server errors
+    if (error.response?.status >= 500) {
+      console.error('Server error:', error.response.status, error.response.data);
+    }
+
     return Promise.reject(error);
   }
 );

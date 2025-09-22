@@ -1,8 +1,8 @@
-import React, { useState } from 'react';
-import { Link, useNavigate } from 'react-router-dom';
+import React, { useEffect } from 'react';
+import { Link, useNavigate, useLocation } from 'react-router-dom';
 import { useForm } from 'react-hook-form';
 import toast from 'react-hot-toast';
-import { authService } from '../services/auth';
+import { useAuth } from '../hooks/useAuth';
 
 interface LoginFormData {
   email: string;
@@ -10,44 +10,32 @@ interface LoginFormData {
 }
 
 const Login: React.FC = () => {
-  const [isLoading, setIsLoading] = useState(false);
+  const { login, isLoading, isAuthenticated, error } = useAuth();
   const navigate = useNavigate();
+  const location = useLocation();
   const { register, handleSubmit, formState: { errors }, trigger } = useForm<LoginFormData>({
     mode: 'onChange'
   });
 
-  const onSubmit = async (data: LoginFormData) => {
-    setIsLoading(true);
-    try {
-      const response = await authService.login(data);
-      
-      if (response.success && response.token) {
-        authService.setToken(response.token);
-        toast.success('Login successful!');
-        navigate('/profile');
-      } else {
-        toast.error(response.message || 'Login failed. Please try again.');
+  useEffect(() => {
+    if (isAuthenticated && !isLoading) {
+      const from = (location.state as any)?.from?.pathname || '/profile';
+      if (location.pathname !== from) {
+        navigate(from, { replace: true });
       }
+    }
+  }, [isAuthenticated, isLoading, navigate, location]);
+
+  const onSubmit = async (data: LoginFormData) => {
+    try {
+      await login(data);
     } catch (error: any) {
       console.error('Login error:', error);
-
-      // Handle validation errors from backend
-      if (error.response?.data?.errors && Array.isArray(error.response.data.errors)) {
-        const validationErrors = error.response.data.errors;
-        validationErrors.forEach((err: any) => {
-          toast.error(`${err.field}: ${err.message}`);
-        });
-      } else {
-        toast.error(error.response?.data?.message || 'Login failed. Please try again.');
-      }
-    } finally {
-      setIsLoading(false);
     }
   };
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-purple-50 to-blue-50 relative overflow-hidden">
-      {/* Decorative background elements */}
       <div className="absolute inset-0 overflow-hidden">
         <div className="absolute top-10 left-10 w-20 h-20 bg-blue-400 rounded-full opacity-20"></div>
         <div className="absolute top-32 right-20 w-16 h-16 bg-purple-400 rounded-full opacity-20"></div>
@@ -55,7 +43,6 @@ const Login: React.FC = () => {
         <div className="absolute top-20 left-1/3 w-8 h-8 bg-yellow-400 rounded-full opacity-20"></div>
         <div className="absolute bottom-32 right-10 w-10 h-10 bg-pink-400 rounded-full opacity-20"></div>
         
-        {/* Triangle decorations */}
         <div className="absolute top-16 left-16 w-0 h-0 border-l-4 border-r-4 border-b-8 border-transparent border-b-green-400 opacity-30 transform rotate-45"></div>
         <div className="absolute bottom-16 right-16 w-0 h-0 border-l-4 border-r-4 border-b-8 border-transparent border-b-blue-400 opacity-30 transform -rotate-12"></div>
         <div className="absolute top-1/2 left-8 w-0 h-0 border-l-3 border-r-3 border-b-6 border-transparent border-b-purple-400 opacity-30 transform rotate-12"></div>
@@ -63,7 +50,6 @@ const Login: React.FC = () => {
 
       <div className="relative flex items-center justify-center min-h-screen py-12 px-4 sm:px-6 lg:px-8">
         <div className="max-w-md w-full">
-          {/* Left side - Laptop icon */}
           <div className="flex justify-center mb-8">
             <div className="relative">
               <div className="w-32 h-32 bg-white rounded-full shadow-lg flex items-center justify-center">
@@ -79,7 +65,6 @@ const Login: React.FC = () => {
             </div>
           </div>
 
-          {/* Right side - Login form */}
           <div className="bg-white rounded-2xl shadow-xl p-8">
             <div className="text-center mb-8">
               <h2 className="text-2xl font-bold text-gray-900 mb-2">Member Login</h2>
@@ -160,6 +145,12 @@ const Login: React.FC = () => {
               >
                 {isLoading ? 'Signing in...' : 'LOGIN'}
               </button>
+
+              {error && (
+                <div className="mt-4 p-3 bg-red-50 border border-red-200 rounded-lg">
+                  <p className="text-sm text-red-600">{error}</p>
+                </div>
+              )}
 
               <div className="text-center">
                 <Link

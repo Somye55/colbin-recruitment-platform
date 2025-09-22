@@ -1,3 +1,7 @@
+
+@import url('https://fonts.googleapis.com/css2?family=DM+Sans:ital,opsz,wght@0,9..40,600;1,9..40,600&family=Figtree:ital,wght@0,300..900;1,300..900&family=Inter+Tight:ital,wght@0,100..900;1,100..900&family=Quicksand:wght@300..700&family=Roboto+Flex:opsz,wght@8..144,100..1000&display=swap');
+
+
 @tailwind base;
 @tailwind components;
 @tailwind utilities;

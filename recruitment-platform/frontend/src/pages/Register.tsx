@@ -47,7 +47,6 @@ const Register: React.FC = () => {
 
   const password = watch("password");
 
-  // Password strength checker
   const checkPasswordStrength = (password: string) => {
     let score = 0;
     const feedback: string[] = [];
@@ -70,12 +69,11 @@ const Register: React.FC = () => {
     if (/[@$!%*?&]/.test(password)) score += 1;
     else feedback.push("One special character (@$!%*?&)");
 
-    if (score >= 5) feedback.length = 0; // Clear feedback if strong
+    if (score >= 5) feedback.length = 0; 
 
     return { score, feedback };
   };
 
-  // Update password strength when password changes
   useEffect(() => {
     if (password) {
       setPasswordStrength(checkPasswordStrength(password));
@@ -84,14 +82,12 @@ const Register: React.FC = () => {
     }
   }, [password]);
 
-  // Get password strength color
   const getPasswordStrengthColor = () => {
     if (passwordStrength.score <= 2) return "bg-red-500";
     if (passwordStrength.score <= 4) return "bg-yellow-500";
     return "bg-green-500";
   };
 
-  // Get password strength text
   const getPasswordStrengthText = () => {
     if (passwordStrength.score <= 2) return "Weak";
     if (passwordStrength.score <= 4) return "Medium";
@@ -101,7 +97,6 @@ const Register: React.FC = () => {
   const onSubmit = async (data: RegisterFormData) => {
     setIsLoading(true);
     try {
-      // Remove confirmPassword from the data sent to API
       const { confirmPassword, ...registerData } = data;
 
       const response = await authService.register(registerData);
@@ -118,7 +113,6 @@ const Register: React.FC = () => {
     } catch (error: any) {
       console.error("Registration error:", error);
 
-      // Handle validation errors from backend
       if (
         error.response?.data?.errors &&
         Array.isArray(error.response.data.errors)
@@ -140,7 +134,6 @@ const Register: React.FC = () => {
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-purple-50 to-blue-50 relative overflow-hidden">
-      {/* Decorative background elements */}
       <div className="absolute inset-0 overflow-hidden">
         <div className="absolute top-10 left-10 w-20 h-20 bg-blue-400 rounded-full opacity-20"></div>
         <div className="absolute top-32 right-20 w-16 h-16 bg-purple-400 rounded-full opacity-20"></div>
@@ -148,7 +141,6 @@ const Register: React.FC = () => {
         <div className="absolute top-20 left-1/3 w-8 h-8 bg-yellow-400 rounded-full opacity-20"></div>
         <div className="absolute bottom-32 right-10 w-10 h-10 bg-pink-400 rounded-full opacity-20"></div>
 
-        {/* Triangle decorations */}
         <div className="absolute top-16 left-16 w-0 h-0 border-l-4 border-r-4 border-b-8 border-transparent border-b-green-400 opacity-30 transform rotate-45"></div>
         <div className="absolute bottom-16 right-16 w-0 h-0 border-l-4 border-r-4 border-b-8 border-transparent border-b-blue-400 opacity-30 transform -rotate-12"></div>
         <div className="absolute top-1/2 left-8 w-0 h-0 border-l-3 border-r-3 border-b-6 border-transparent border-b-purple-400 opacity-30 transform rotate-12"></div>
@@ -156,7 +148,6 @@ const Register: React.FC = () => {
 
       <div className="relative flex items-center justify-center min-h-screen py-12 px-4 sm:px-6 lg:px-8">
         <div className="max-w-4xl w-full">
-          {/* Left side - Laptop icon */}
           <div className="flex justify-center mb-8">
             <div className="relative">
               <div className="w-32 h-32 bg-white rounded-full shadow-lg flex items-center justify-center">
@@ -172,7 +163,6 @@ const Register: React.FC = () => {
             </div>
           </div>
 
-          {/* Right side - Register form */}
           <div className="bg-white rounded-2xl shadow-xl overflow-hidden">
             <div className="px-6 py-8">
             <div className="text-center mb-8">
@@ -184,7 +174,6 @@ const Register: React.FC = () => {
             <form className="space-y-6" onSubmit={handleSubmit(onSubmit)}>
               <div className="space-y-4">
 
-                {/* Personal Information */}
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                   <div>
                     <label className="block text-sm font-medium text-gray-700 mb-2">
@@ -373,7 +362,6 @@ const Register: React.FC = () => {
                   </div>
                 </div>
 
-                {/* Professional Information */}
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                   <div>
                     <label className="block text-sm font-medium text-gray-700 mb-2">
@@ -502,7 +490,6 @@ const Register: React.FC = () => {
                   </div>
                 </div>
 
-                {/* Conditional Notice Period Days */}
                 {watch("noticePeriod") === "Yes" && (
                   <div>
                     <label className="block text-sm font-medium text-gray-700 mb-2">
@@ -533,7 +520,6 @@ const Register: React.FC = () => {
                   </div>
                 )}
 
-                {/* Optional Fields */}
                 <FormField label="Bio" error={errors.bio?.message}>
                   <textarea
                     {...register("bio", {
@@ -626,7 +612,7 @@ const Register: React.FC = () => {
                   </div>
                 </FormField>
 
-                <FormField label="Phone Number" error={errors.phone?.message}>
+                <FormField label="Phone Number *" error={errors.phone?.message}>
                   <div className="relative">
                     <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
                       <svg
@@ -645,13 +631,13 @@ const Register: React.FC = () => {
                     </div>
                     <input
                       {...register("phone", {
+                        required: "Phone number is required",
                         pattern: {
                           value: /^\+?[\d\s\-\(\)\.]+$/,
                           message: "Please enter a valid phone number",
                         },
                         validate: {
                           length: (value) => {
-                            if (!value) return true; // Optional field
                             const cleanPhone = value.replace(/\D/g, "");
                             return (
                               (cleanPhone.length >= 10 &&
@@ -664,7 +650,7 @@ const Register: React.FC = () => {
                       })}
                       type="tel"
                       className="w-full pl-10 pr-3 py-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-green-500 focus:border-green-500 transition-colors"
-                      placeholder="Phone Number (Optional)"
+                      placeholder="Enter your phone number"
                     />
                   </div>
                 </FormField>
@@ -729,7 +715,6 @@ const Register: React.FC = () => {
                   </div>
                 </FormField>
 
-                {/* Password Strength Indicator */}
                 {password && (
                   <div className="w-full">
                     <div className="flex items-center justify-between mb-1">

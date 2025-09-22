@@ -1,11 +1,12 @@
 import React, { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import toast from "react-hot-toast";
-import { authService } from "../services/auth";
+import { useAuth } from "../hooks/useAuth";
 import { profileService, UserProfile } from "../services/profile";
 import ProfileEditForm from "../components/ProfileEditForm";
 
 const Profile: React.FC = () => {
+  const { user, logout, refreshUser } = useAuth();
   const [profile, setProfile] = useState<UserProfile | null>(null);
   const [isLoading, setIsLoading] = useState(true);
   const [isEditing, setIsEditing] = useState(false);
@@ -18,24 +19,36 @@ const Profile: React.FC = () => {
 
         if (response.success && response.data) {
           setProfile(response.data);
+          await refreshUser();
         } else {
           toast.error(response.message || "Failed to load profile");
-          navigate("/login");
+          console.error("Profile fetch failed:", response.message);
         }
       } catch (error: any) {
         console.error("Profile fetch error:", error);
-        toast.error(error.response?.data?.message || "Failed to load profile");
-        navigate("/login");
+
+        if (error.response?.status === 401) {
+          toast.error("Session expired. Please log in again.");
+          logout();
+          navigate("/login");
+        } else if (error.response?.status === 404) {
+          toast.error("Profile not found");
+          logout();
+          navigate("/login");
+        } else {
+          toast.error(error.response?.data?.message || "Failed to load profile");
+          console.error("Profile fetch failed with error:", error.response?.status);
+        }
       } finally {
         setIsLoading(false);
       }
     };
 
     fetchProfile();
-  }, [navigate]);
+  }, [navigate, refreshUser, logout]);
 
   const handleLogout = () => {
-    authService.logout();
+    logout();
     toast.success("Logged out successfully");
     navigate("/login");
   };
@@ -56,7 +69,6 @@ const Profile: React.FC = () => {
   if (isLoading) {
     return (
       <div className="min-h-screen bg-gradient-to-br from-purple-50 to-blue-50 flex items-center justify-center relative overflow-hidden">
-        {/* Decorative background elements */}
         <div className="absolute inset-0 overflow-hidden">
           <div className="absolute top-10 left-10 w-20 h-20 bg-blue-400 rounded-full opacity-20"></div>
           <div className="absolute top-32 right-20 w-16 h-16 bg-purple-400 rounded-full opacity-20"></div>
@@ -73,7 +85,6 @@ const Profile: React.FC = () => {
   if (!profile) {
     return (
       <div className="min-h-screen bg-gradient-to-br from-purple-50 to-blue-50 flex items-center justify-center relative overflow-hidden">
-        {/* Decorative background elements */}
         <div className="absolute inset-0 overflow-hidden">
           <div className="absolute top-10 left-10 w-20 h-20 bg-blue-400 rounded-full opacity-20"></div>
           <div className="absolute top-32 right-20 w-16 h-16 bg-purple-400 rounded-full opacity-20"></div>
@@ -111,7 +122,6 @@ const Profile: React.FC = () => {
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-purple-50 to-blue-50 relative overflow-hidden">
-      {/* Decorative background elements */}
       <div className="absolute inset-0 overflow-hidden">
         <div className="absolute top-10 left-10 w-20 h-20 bg-blue-400 rounded-full opacity-20"></div>
         <div className="absolute top-32 right-20 w-16 h-16 bg-purple-400 rounded-full opacity-20"></div>
@@ -119,14 +129,12 @@ const Profile: React.FC = () => {
         <div className="absolute top-20 left-1/3 w-8 h-8 bg-yellow-400 rounded-full opacity-20"></div>
         <div className="absolute bottom-32 right-10 w-10 h-10 bg-pink-400 rounded-full opacity-20"></div>
 
-        {/* Triangle decorations */}
         <div className="absolute top-16 left-16 w-0 h-0 border-l-4 border-r-4 border-b-8 border-transparent border-b-green-400 opacity-30 transform rotate-45"></div>
         <div className="absolute bottom-16 right-16 w-0 h-0 border-l-4 border-r-4 border-b-8 border-transparent border-b-blue-400 opacity-30 transform -rotate-12"></div>
       </div>
 
       <div className="relative py-12 px-4 sm:px-6 lg:px-8">
         <div className="max-w-4xl mx-auto">
-          {/* Header */}
           <div className="text-center mb-8">
             <div className="flex justify-center mb-6">
               <div className="relative">
@@ -182,7 +190,6 @@ const Profile: React.FC = () => {
             </p>
           </div>
 
-          {/* Profile Card or Edit Form */}
           {isEditing ? (
             <ProfileEditForm
               profile={profile}
@@ -239,7 +246,6 @@ const Profile: React.FC = () => {
               </div>
 
               <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-                {/* Personal Information */}
                 <div className="space-y-4">
                   <h3 className="text-lg font-semibold text-gray-900 mb-4">
                     Personal Information
@@ -377,7 +383,6 @@ const Profile: React.FC = () => {
                   )}
                 </div>
 
-                {/* Contact Information */}
                 <div className="space-y-4">
                   <h3 className="text-lg font-semibold text-gray-900 mb-4">
                     Contact Information
@@ -462,7 +467,6 @@ const Profile: React.FC = () => {
                   </div>
                 </div>
 
-                {/* Professional Information */}
                 <div className="space-y-4">
                   <h3 className="text-lg font-semibold text-gray-900 mb-4">
                     Professional Information
@@ -575,8 +579,7 @@ const Profile: React.FC = () => {
                   )}
                 </div>
               </div>
-
-              {/* Additional Information */}
+              
               <div className="mt-8 space-y-6">
                 {profile.bio && (
                   <div className="p-4 bg-gray-50 rounded-lg">

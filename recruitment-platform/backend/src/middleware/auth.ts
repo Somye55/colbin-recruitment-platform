@@ -30,8 +30,6 @@ export const authenticate = async (
     }
 
     try {
-      // @ts-ignore - JWT library has complex type definitions
-      // @ts-ignore - JWT library has complex type definitions
       const decoded = jwt.verify(
         token,
         process.env.JWT_SECRET || 'your-secret-key'
@@ -74,7 +72,6 @@ export const optionalAuth = async (
     const authHeader = req.headers.authorization;
 
     if (!authHeader || !authHeader.startsWith('Bearer ')) {
-      // No token provided, continue without authentication
       next();
       return;
     }
@@ -95,16 +92,13 @@ export const optionalAuth = async (
 
       next();
     } catch (jwtError) {
-      // Invalid token, but continue without authentication
       next();
     }
   } catch (error) {
-    // Error occurred, but continue without authentication
     next();
   }
 };
 
-// Validation middleware for handling validation errors
 export const handleValidationErrors = (
   req: Request,
   res: Response,
@@ -129,13 +123,11 @@ export const handleValidationErrors = (
   next();
 };
 
-// Input sanitization middleware
 export const sanitizeInput = (
   req: Request,
   res: Response,
   next: NextFunction
 ): void => {
-  // Sanitize string inputs
   if (req.body && typeof req.body === 'object') {
     Object.keys(req.body).forEach(key => {
       if (typeof req.body[key] === 'string') {

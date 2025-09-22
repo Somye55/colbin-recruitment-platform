@@ -1,42 +1,16 @@
-import React, { useState, useEffect } from 'react';
+import React from 'react';
 import { Navigate, useLocation } from 'react-router-dom';
-import { authService } from '../services/auth';
+import { useAuth } from '../hooks/useAuth';
 
 interface ProtectedRouteProps {
   children: React.ReactNode;
 }
 
 const ProtectedRoute: React.FC<ProtectedRouteProps> = ({ children }) => {
-  const [isAuthenticated, setIsAuthenticated] = useState<boolean | null>(null);
-  const [isLoading, setIsLoading] = useState(true);
+  const { isAuthenticated, isLoading } = useAuth();
   const location = useLocation();
 
-  useEffect(() => {
-    const checkAuth = async () => {
-      try {
-        // Check if token exists
-        const token = authService.getToken();
-        if (!token) {
-          setIsAuthenticated(false);
-          setIsLoading(false);
-          return;
-        }
-
-        // Verify token by making API call
-        const response = await authService.getCurrentUser();
-        setIsAuthenticated(response.success);
-      } catch (error) {
-        console.error('Auth check error:', error);
-        setIsAuthenticated(false);
-      } finally {
-        setIsLoading(false);
-      }
-    };
-
-    checkAuth();
-  }, []);
-
-  if (isLoading) {
+  if (isLoading && isAuthenticated === false) {
     return (
       <div className="min-h-screen flex items-center justify-center">
         <div className="text-center">
@@ -48,7 +22,6 @@ const ProtectedRoute: React.FC<ProtectedRouteProps> = ({ children }) => {
   }
 
   if (!isAuthenticated) {
-    // Redirect to login page with return url
     return <Navigate to="/login" state={{ from: location }} replace />;
   }
 

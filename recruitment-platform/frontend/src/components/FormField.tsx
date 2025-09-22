@@ -21,9 +21,11 @@ const FormField: React.FC<FormFieldProps> = ({
     <div className={className}>
       <label className="block text-sm font-medium text-gray-700 mb-2">
         {label}
-        {required && <span className="text-red-500 ml-1">*</span>}
+        {required && <span className="text-red-500">*</span>}
       </label>
-      {children}
+      <div className="relative">
+        {children}
+      </div>
       {error && <p className="text-red-500 text-sm mt-1">{error}</p>}
       {helperText && <p className="text-sm text-gray-500 mt-1">{helperText}</p>}
     </div>
