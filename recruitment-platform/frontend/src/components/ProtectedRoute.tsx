@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { Navigate, useLocation } from 'react-router-dom';
+import { authService } from '../services/auth';
 
 interface ProtectedRouteProps {
   children: React.ReactNode;
@@ -11,16 +12,21 @@ const ProtectedRoute: React.FC<ProtectedRouteProps> = ({ children }) => {
   const location = useLocation();
 
   useEffect(() => {
-    // TODO: Implement authentication check API call
     const checkAuth = async () => {
       try {
-        // Simulate API call to check authentication
-        await new Promise(resolve => setTimeout(resolve, 500));
+        // Check if token exists
+        const token = authService.getToken();
+        if (!token) {
+          setIsAuthenticated(false);
+          setIsLoading(false);
+          return;
+        }
 
-        // For now, check if token exists in localStorage
-        const token = localStorage.getItem('authToken');
-        setIsAuthenticated(!!token);
+        // Verify token by making API call
+        const response = await authService.getCurrentUser();
+        setIsAuthenticated(response.success);
       } catch (error) {
+        console.error('Auth check error:', error);
         setIsAuthenticated(false);
       } finally {
         setIsLoading(false);

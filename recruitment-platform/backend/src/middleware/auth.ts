@@ -1,7 +1,7 @@
 import jwt from 'jsonwebtoken';
 import { Request, Response, NextFunction } from 'express';
 import User from '../models/User';
-import { IAuthenticatedRequest, IJwtPayload } from '../types';
+import { IAuthenticatedRequest, IJwtPayload, IApiResponse } from '../types';
 
 export const authenticate = async (
   req: IAuthenticatedRequest,
@@ -102,4 +102,103 @@ export const optionalAuth = async (
     // Error occurred, but continue without authentication
     next();
   }
+};
+
+// Validation middleware for handling validation errors
+export const handleValidationErrors = (
+  req: Request,
+  res: Response,
+  next: NextFunction
+): void => {
+  const errors = (req as any).validationErrors;
+
+  if (errors && errors.length > 0) {
+    const formattedErrors = errors.map((error: any) => ({
+      field: error.param || error.field,
+      message: error.msg || error.message,
+      value: error.value,
+    }));
+
+    res.status(400).json({
+      success: false,
+      message: 'Validation failed',
+      errors: formattedErrors,
+    } as IApiResponse);
+    return;
+  }
+  next();
+};
+
+// Input sanitization middleware
+export const sanitizeInput = (
+  req: Request,
+  res: Response,
+  next: NextFunction
+): void => {
+  // Sanitize string inputs
+  if (req.body && typeof req.body === 'object') {
+    Object.keys(req.body).forEach(key => {
+      if (typeof req.body[key] === 'string') {
+        // Remove potential XSS vectors
+        req.body[key] = req.body[key]
+          .replace(/<script\b[^<]*(?:(?!<\/script>)<[^<]*)*<\/script>/gi, '')
+          .replace(/javascript:/gi, '')
+          .replace(/on\w+\s*=/gi, '')
+          .trim();
+
+        // Remove excessive whitespace
+        if (req.body[key].length > 0) {
+          req.body[key] = req.body[key].replace(/\s+/g, ' ');
+        }
+      }
+    });
+  }
+
+  // Sanitize query parameters
+  if (req.query && typeof req.query === 'object') {
+    Object.keys(req.query).forEach(key => {
+      if (typeof req.query[key] === 'string') {
+        req.query[key] = req.query[key]
+          .replace(/<script\b[^<]*(?:(?!<\/script>)<[^<]*)*<\/script>/gi, '')
+          .replace(/javascript:/gi, '')
+          .replace(/on\w+\s*=/gi, '')
+          .trim();
+      }
+    });
+  }
+
+  next();
+};
+
+// Rate limiting simulation (basic implementation)
+const requestCounts = new Map<string, { count: number; resetTime: number }>();
+
+export const rateLimit = (maxRequests: number = 5, windowMs: number = 15 * 60 * 1000) => {
+  return (req: Request, res: Response, next: NextFunction): void => {
+    const clientIP = req.ip || req.connection.remoteAddress || 'unknown';
+    const now = Date.now();
+    const windowKey = `${clientIP}-${Math.floor(now / windowMs)}`;
+
+    const clientData = requestCounts.get(windowKey);
+
+    if (!clientData || now > clientData.resetTime) {
+      // Reset or initialize
+      requestCounts.set(windowKey, {
+        count: 1,
+        resetTime: now + windowMs
+      });
+      next();
+    } else if (clientData.count < maxRequests) {
+      // Increment counter
+      clientData.count++;
+      next();
+    } else {
+      // Rate limit exceeded
+      res.status(429).json({
+        success: false,
+        message: 'Too many requests. Please try again later.',
+        retryAfter: Math.ceil((clientData.resetTime - now) / 1000)
+      } as IApiResponse);
+    }
+  };
 };
