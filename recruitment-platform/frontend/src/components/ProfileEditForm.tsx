@@ -1,6 +1,8 @@
 import React, { useState, useEffect } from 'react';
 import toast from 'react-hot-toast';
 import { profileService, UserProfile, UpdateProfileData } from '../services/profile';
+import FormField from './FormField';
+import { validateUrl } from '../utils/validation';
 
 interface ProfileEditFormProps {
   profile: UserProfile;
@@ -23,13 +25,11 @@ const ProfileEditForm: React.FC<ProfileEditFormProps> = ({ profile, onSave, onCa
     noticePeriod: profile.noticePeriod || '',
     noticePeriodDays: profile.noticePeriodDays || 0,
     bio: profile.bio || '',
-    skills: profile.skills || [],
     experience: profile.experience || '',
     resumeUrl: profile.resumeUrl || '',
     avatar: profile.avatar || '',
   });
 
-  const [skillInput, setSkillInput] = useState('');
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [errors, setErrors] = useState<Record<string, string>>({});
 
@@ -49,7 +49,6 @@ const ProfileEditForm: React.FC<ProfileEditFormProps> = ({ profile, onSave, onCa
       noticePeriod: profile.noticePeriod || '',
       noticePeriodDays: profile.noticePeriodDays || 0,
       bio: profile.bio || '',
-      skills: profile.skills || [],
       experience: profile.experience || '',
       resumeUrl: profile.resumeUrl || '',
       avatar: profile.avatar || '',
@@ -122,6 +121,12 @@ const ProfileEditForm: React.FC<ProfileEditFormProps> = ({ profile, onSave, onCa
       newErrors.expectedCTC = 'Expected CTC must be between 0 and 10,000,000';
     }
 
+    // URL validation
+    const resumeUrlError = validateUrl(formData.resumeUrl || '');
+    if (resumeUrlError) {
+      newErrors.resumeUrl = resumeUrlError;
+    }
+
     setErrors(newErrors);
     return Object.keys(newErrors).length === 0;
   };
@@ -134,22 +139,6 @@ const ProfileEditForm: React.FC<ProfileEditFormProps> = ({ profile, onSave, onCa
     }
   };
 
-  const handleAddSkill = () => {
-    if (skillInput.trim() && !formData.skills?.includes(skillInput.trim())) {
-      setFormData(prev => ({
-        ...prev,
-        skills: [...(prev.skills || []), skillInput.trim()]
-      }));
-      setSkillInput('');
-    }
-  };
-
-  const handleRemoveSkill = (skillToRemove: string) => {
-    setFormData(prev => ({
-      ...prev,
-      skills: prev.skills?.filter(skill => skill !== skillToRemove) || []
-    }));
-  };
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -427,10 +416,7 @@ const ProfileEditForm: React.FC<ProfileEditFormProps> = ({ profile, onSave, onCa
         </div>
 
         {/* Bio */}
-        <div>
-          <label className="block text-sm font-medium text-gray-700 mb-2">
-            Bio
-          </label>
+        <FormField label="Bio">
           <textarea
             value={formData.bio || ''}
             onChange={(e) => handleInputChange('bio', e.target.value)}
@@ -438,57 +424,11 @@ const ProfileEditForm: React.FC<ProfileEditFormProps> = ({ profile, onSave, onCa
             className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-green-500 focus:border-transparent"
             placeholder="Tell us about yourself..."
           />
-          <p className="text-sm text-gray-500 mt-1">Optional - Maximum 500 characters</p>
-        </div>
+        </FormField>
 
-        {/* Skills */}
-        <div>
-          <label className="block text-sm font-medium text-gray-700 mb-2">
-            Skills
-          </label>
-          <div className="flex gap-2 mb-2">
-            <input
-              type="text"
-              value={skillInput}
-              onChange={(e) => setSkillInput(e.target.value)}
-              className="flex-1 px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-green-500 focus:border-transparent"
-              placeholder="Add a skill..."
-              onKeyPress={(e) => e.key === 'Enter' && (e.preventDefault(), handleAddSkill())}
-            />
-            <button
-              type="button"
-              onClick={handleAddSkill}
-              className="px-6 py-3 bg-green-500 text-white rounded-lg hover:bg-green-600 transition duration-200"
-            >
-              Add
-            </button>
-          </div>
-          {formData.skills && formData.skills.length > 0 && (
-            <div className="flex flex-wrap gap-2 mt-2">
-              {formData.skills.map((skill, index) => (
-                <span
-                  key={index}
-                  className="inline-flex items-center px-3 py-1 rounded-full text-sm bg-green-100 text-green-800 border border-green-200"
-                >
-                  {skill}
-                  <button
-                    type="button"
-                    onClick={() => handleRemoveSkill(skill)}
-                    className="ml-2 text-green-600 hover:text-green-800"
-                  >
-                    ×
-                  </button>
-                </span>
-              ))}
-            </div>
-          )}
-        </div>
 
         {/* Experience Description */}
-        <div>
-          <label className="block text-sm font-medium text-gray-700 mb-2">
-            Experience Description
-          </label>
+        <FormField label="Experience Description">
           <textarea
             value={formData.experience || ''}
             onChange={(e) => handleInputChange('experience', e.target.value)}
@@ -496,29 +436,23 @@ const ProfileEditForm: React.FC<ProfileEditFormProps> = ({ profile, onSave, onCa
             className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-green-500 focus:border-transparent"
             placeholder="Describe your work experience..."
           />
-          <p className="text-sm text-gray-500 mt-1">Optional - Maximum 1000 characters</p>
-        </div>
+        </FormField>
 
         {/* Resume URL */}
-        <div>
-          <label className="block text-sm font-medium text-gray-700 mb-2">
-            Resume URL
-          </label>
+        <FormField label="Resume URL" error={errors.resumeUrl}>
           <input
             type="url"
             value={formData.resumeUrl || ''}
             onChange={(e) => handleInputChange('resumeUrl', e.target.value)}
-            className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-green-500 focus:border-transparent"
+            className={`w-full px-4 py-3 border rounded-lg focus:ring-2 focus:ring-green-500 focus:border-transparent ${
+              errors.resumeUrl ? 'border-red-500' : 'border-gray-300'
+            }`}
             placeholder="https://example.com/resume.pdf"
           />
-          <p className="text-sm text-gray-500 mt-1">Optional - Link to your resume</p>
-        </div>
+        </FormField>
 
         {/* Avatar URL */}
-        <div>
-          <label className="block text-sm font-medium text-gray-700 mb-2">
-            Avatar URL
-          </label>
+        <FormField label="Avatar URL">
           <input
             type="url"
             value={formData.avatar || ''}
@@ -526,8 +460,7 @@ const ProfileEditForm: React.FC<ProfileEditFormProps> = ({ profile, onSave, onCa
             className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-green-500 focus:border-transparent"
             placeholder="https://example.com/avatar.jpg"
           />
-          <p className="text-sm text-gray-500 mt-1">Optional - Link to your profile picture</p>
-        </div>
+        </FormField>
 
         {/* Form Actions */}
         <div className="flex justify-end space-x-4 pt-6 border-t">

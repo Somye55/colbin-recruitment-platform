@@ -10,12 +10,6 @@ type UserModel = Model<IUserDocument, {}, IUserMethods>;
 
 const userSchema = new Schema<IUserDocument, UserModel, IUserMethods>(
   {
-    name: {
-      type: String,
-      required: [true, 'Name is required'],
-      trim: true,
-      maxlength: [50, 'Name cannot exceed 50 characters'],
-    },
     email: {
       type: String,
       required: [true, 'Email is required'],
@@ -168,13 +162,7 @@ const userSchema = new Schema<IUserDocument, UserModel, IUserMethods>(
       type: Number,
       required: [true, 'Expected CTC is required'],
       min: [0, 'Expected CTC cannot be negative'],
-      max: [10000000, 'Expected CTC cannot exceed 10,000,000'],
-      validate: {
-        validator: function(value: number) {
-          return value >= this.currentCTC;
-        },
-        message: 'Expected CTC must be greater than or equal to current CTC'
-      }
+      max: [10000000, 'Expected CTC cannot exceed 10,000,000']
     },
     noticePeriod: {
       type: String,
@@ -206,10 +194,6 @@ const userSchema = new Schema<IUserDocument, UserModel, IUserMethods>(
       trim: true,
       maxlength: [500, 'Bio cannot exceed 500 characters'],
     },
-    skills: [{
-      type: String,
-      trim: true,
-    }],
     experience: {
       type: String,
       trim: true,

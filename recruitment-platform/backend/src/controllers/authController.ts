@@ -6,16 +6,6 @@ import { ILoginRequest, IRegisterRequest, IAuthResponse } from '../types';
 
 // Validation rules
 export const registerValidation = [
-  body('name')
-    .trim()
-    .isLength({ min: 2, max: 50 })
-    .withMessage('Name must be between 2 and 50 characters')
-    .matches(/^[a-zA-Z\s'-]+$/)
-    .withMessage('Name can only contain letters, spaces, hyphens, and apostrophes')
-    .customSanitizer((value: string) => {
-      // Remove extra spaces and capitalize first letter of each word
-      return value.replace(/\s+/g, ' ').trim().replace(/\b\w/g, (char: string) => char.toUpperCase());
-    }),
   body('email')
     .isEmail()
     .normalizeEmail()
@@ -98,7 +88,6 @@ export const register = async (req: Request, res: Response): Promise<void> => {
     }
 
     const {
-      name,
       email,
       password,
       designation,
@@ -114,7 +103,6 @@ export const register = async (req: Request, res: Response): Promise<void> => {
       noticePeriod,
       noticePeriodDays,
       bio,
-      skills,
       experience,
       resumeUrl,
       avatar
@@ -132,7 +120,6 @@ export const register = async (req: Request, res: Response): Promise<void> => {
 
     // Create new user
     const user = new User({
-      name,
       email,
       password,
       designation,
@@ -148,7 +135,6 @@ export const register = async (req: Request, res: Response): Promise<void> => {
       noticePeriod,
       noticePeriodDays,
       bio,
-      skills,
       experience,
       resumeUrl,
       avatar,
@@ -169,7 +155,6 @@ export const register = async (req: Request, res: Response): Promise<void> => {
       message: 'User registered successfully',
       user: {
         _id: user._id,
-        name: user.name,
         email: user.email,
         designation: user.designation,
         firstName: user.firstName,
@@ -184,7 +169,6 @@ export const register = async (req: Request, res: Response): Promise<void> => {
         noticePeriod: user.noticePeriod,
         noticePeriodDays: user.noticePeriodDays,
         bio: user.bio,
-        skills: user.skills,
         experience: user.experience,
         resumeUrl: user.resumeUrl,
         avatar: user.avatar,
@@ -251,7 +235,6 @@ export const login = async (req: Request, res: Response): Promise<void> => {
       message: 'Login successful',
       user: {
         _id: user._id,
-        name: user.name,
         email: user.email,
         designation: user.designation,
         firstName: user.firstName,
@@ -266,7 +249,6 @@ export const login = async (req: Request, res: Response): Promise<void> => {
         noticePeriod: user.noticePeriod,
         noticePeriodDays: user.noticePeriodDays,
         bio: user.bio,
-        skills: user.skills,
         experience: user.experience,
         resumeUrl: user.resumeUrl,
         avatar: user.avatar,
@@ -302,11 +284,9 @@ export const getMe = async (req: Request, res: Response): Promise<void> => {
       message: 'User retrieved successfully',
       user: {
         _id: user._id,
-        name: user.name,
         email: user.email,
         phone: user.phone,
         bio: user.bio,
-        skills: user.skills,
         experience: user.experience,
         resumeUrl: user.resumeUrl,
         avatar: user.avatar,

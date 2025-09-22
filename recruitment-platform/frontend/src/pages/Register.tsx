@@ -3,9 +3,10 @@ import { Link, useNavigate } from "react-router-dom";
 import { useForm } from "react-hook-form";
 import toast from "react-hot-toast";
 import { authService } from "../services/auth";
+import FormField from "../components/FormField";
+import { validateUrl } from "../utils/validation";
 
 interface RegisterFormData {
-  name: string;
   email: string;
   password: string;
   confirmPassword: string;
@@ -22,7 +23,6 @@ interface RegisterFormData {
   noticePeriod: string;
   noticePeriodDays?: number;
   bio?: string;
-  skills?: string[];
   experience?: string;
   resumeUrl?: string;
   avatar?: string;
@@ -46,8 +46,6 @@ const Register: React.FC = () => {
   });
 
   const password = watch("password");
-  const email = watch("email");
-  const name = watch("name");
 
   // Password strength checker
   const checkPasswordStrength = (password: string) => {
@@ -185,50 +183,6 @@ const Register: React.FC = () => {
 
             <form className="space-y-6" onSubmit={handleSubmit(onSubmit)}>
               <div className="space-y-4">
-                <div className="relative">
-                  <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
-                    <svg
-                      className="h-5 w-5 text-gray-400"
-                      fill="none"
-                      stroke="currentColor"
-                      viewBox="0 0 24 24"
-                    >
-                      <path
-                        strokeLinecap="round"
-                        strokeLinejoin="round"
-                        strokeWidth="2"
-                        d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z"
-                      ></path>
-                    </svg>
-                  </div>
-                  <input
-                    {...register("name", {
-                      required: "Name is required",
-                      minLength: {
-                        value: 2,
-                        message: "Name must be at least 2 characters",
-                      },
-                      maxLength: {
-                        value: 50,
-                        message: "Name cannot exceed 50 characters",
-                      },
-                      pattern: {
-                        value: /^[a-zA-Z\s'-]+$/,
-                        message:
-                          "Name can only contain letters, spaces, hyphens, and apostrophes",
-                      },
-                      onChange: () => trigger("name"),
-                    })}
-                    type="text"
-                    className="w-full pl-10 pr-3 py-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-green-500 focus:border-green-500 transition-colors"
-                    placeholder="Full Name"
-                  />
-                  {errors.name && (
-                    <p className="mt-1 text-sm text-red-600">
-                      {errors.name.message}
-                    </p>
-                  )}
-                </div>
 
                 {/* Personal Information */}
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
@@ -438,8 +392,11 @@ const Register: React.FC = () => {
                         },
                         validate: {
                           decimal: (value) => {
+                            if (value === undefined || value === null || value === 0) return true;
+                            const numValue = Number(value);
+                            if (isNaN(numValue)) return true;
                             return (
-                              Number(value.toFixed(1)) === value ||
+                              Number(numValue.toFixed(1)) === numValue ||
                               "Experience must have at most 1 decimal place"
                             );
                           },
@@ -577,10 +534,7 @@ const Register: React.FC = () => {
                 )}
 
                 {/* Optional Fields */}
-                <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-2">
-                    Bio
-                  </label>
+                <FormField label="Bio" error={errors.bio?.message}>
                   <textarea
                     {...register("bio", {
                       maxLength: {
@@ -592,20 +546,9 @@ const Register: React.FC = () => {
                     className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-green-500 focus:border-green-500 transition-colors"
                     placeholder="Tell us about yourself..."
                   />
-                  <p className="text-sm text-gray-500 mt-1">
-                    Optional - Maximum 500 characters
-                  </p>
-                  {errors.bio && (
-                    <p className="mt-1 text-sm text-red-600">
-                      {errors.bio.message}
-                    </p>
-                  )}
-                </div>
+                </FormField>
 
-                <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-2">
-                    Experience Description
-                  </label>
+                <FormField label="Experience Description" error={errors.experience?.message}>
                   <textarea
                     {...register("experience", {
                       maxLength: {
@@ -618,197 +561,173 @@ const Register: React.FC = () => {
                     className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-green-500 focus:border-green-500 transition-colors"
                     placeholder="Describe your work experience..."
                   />
-                  <p className="text-sm text-gray-500 mt-1">
-                    Optional - Maximum 1000 characters
-                  </p>
-                  {errors.experience && (
-                    <p className="mt-1 text-sm text-red-600">
-                      {errors.experience.message}
-                    </p>
-                  )}
-                </div>
+                </FormField>
 
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                  <div>
-                    <label className="block text-sm font-medium text-gray-700 mb-2">
-                      Resume URL
-                    </label>
+                  <FormField label="Resume URL" error={errors.resumeUrl?.message}>
                     <input
-                      {...register("resumeUrl")}
+                      {...register("resumeUrl", {
+                        validate: (value) => {
+                          if (!value || value.trim() === '') return true;
+                          return validateUrl(value) === '' || 'Please enter a valid URL (must start with http:// or https://)';
+                        }
+                      })}
                       type="url"
                       className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-green-500 focus:border-green-500 transition-colors"
                       placeholder="https://example.com/resume.pdf"
                     />
-                    <p className="text-sm text-gray-500 mt-1">
-                      Optional - Link to your resume
-                    </p>
-                  </div>
+                  </FormField>
 
-                  <div>
-                    <label className="block text-sm font-medium text-gray-700 mb-2">
-                      Avatar URL
-                    </label>
+                  <FormField label="Avatar URL">
                     <input
                       {...register("avatar")}
                       type="url"
                       className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-green-500 focus:border-green-500 transition-colors"
                       placeholder="https://example.com/avatar.jpg"
                     />
-                    <p className="text-sm text-gray-500 mt-1">
-                      Optional - Link to your profile picture
-                    </p>
-                  </div>
+                  </FormField>
                 </div>
 
-                <div className="relative">
-                  <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
-                    <svg
-                      className="h-5 w-5 text-gray-400"
-                      fill="none"
-                      stroke="currentColor"
-                      viewBox="0 0 24 24"
-                    >
-                      <path
-                        strokeLinecap="round"
-                        strokeLinejoin="round"
-                        strokeWidth="2"
-                        d="M16 12a4 4 0 10-8 0 4 4 0 008 0zm0 0v1.5a2.5 2.5 0 005 0V12a9 9 0 10-9 9m4.5-1.206a8.959 8.959 0 01-4.5 1.207"
-                      ></path>
-                    </svg>
-                  </div>
-                  <input
-                    {...register("email", {
-                      required: "Email is required",
-                      pattern: {
-                        value:
-                          /^[a-zA-Z0-9.!#$%&'*+/=?^_`{|}~-]+@[a-zA-Z0-9](?:[a-zA-Z0-9-]{0,61}[a-zA-Z0-9])?(?:\.[a-zA-Z0-9](?:[a-zA-Z0-9-]{0,61}[a-zA-Z0-9])?)*$/,
-                        message: "Please enter a valid email address",
-                      },
-                      maxLength: {
-                        value: 254,
-                        message: "Email address is too long",
-                      },
-                      onChange: () => trigger("email"),
-                    })}
-                    type="email"
-                    className="w-full pl-10 pr-3 py-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-green-500 focus:border-green-500 transition-colors"
-                    placeholder="Email"
-                  />
-                  {errors.email && (
-                    <p className="mt-1 text-sm text-red-600">
-                      {errors.email.message}
-                    </p>
-                  )}
-                </div>
-
-                <div className="relative">
-                  <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
-                    <svg
-                      className="h-5 w-5 text-gray-400"
-                      fill="none"
-                      stroke="currentColor"
-                      viewBox="0 0 24 24"
-                    >
-                      <path
-                        strokeLinecap="round"
-                        strokeLinejoin="round"
-                        strokeWidth="2"
-                        d="M3 5a2 2 0 012-2h3.28a1 1 0 01.948.684l1.498 4.493a1 1 0 01-.502 1.21l-2.257 1.13a11.042 11.042 0 005.516 5.516l1.13-2.257a1 1 0 011.21-.502l4.493 1.498a1 1 0 01.684.949V19a2 2 0 01-2 2h-1C9.716 21 3 14.284 3 6V5z"
-                      ></path>
-                    </svg>
-                  </div>
-                  <input
-                    {...register("phone", {
-                      pattern: {
-                        value: /^\+?[\d\s\-\(\)\.]+$/,
-                        message: "Please enter a valid phone number",
-                      },
-                      validate: {
-                        length: (value) => {
-                          if (!value) return true; // Optional field
-                          const cleanPhone = value.replace(/\D/g, "");
-                          return (
-                            (cleanPhone.length >= 10 &&
-                              cleanPhone.length <= 15) ||
-                            "Phone number must be between 10 and 15 digits"
-                          );
+                <FormField label="Email" required error={errors.email?.message}>
+                  <div className="relative">
+                    <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
+                      <svg
+                        className="h-5 w-5 text-gray-400"
+                        fill="none"
+                        stroke="currentColor"
+                        viewBox="0 0 24 24"
+                      >
+                        <path
+                          strokeLinecap="round"
+                          strokeLinejoin="round"
+                          strokeWidth="2"
+                          d="M16 12a4 4 0 10-8 0 4 4 0 008 0zm0 0v1.5a2.5 2.5 0 005 0V12a9 9 0 10-9 9m4.5-1.206a8.959 8.959 0 01-4.5 1.207"
+                        ></path>
+                      </svg>
+                    </div>
+                    <input
+                      {...register("email", {
+                        required: "Email is required",
+                        pattern: {
+                          value:
+                            /^[a-zA-Z0-9.!#$%&'*+/=?^_`{|}~-]+@[a-zA-Z0-9](?:[a-zA-Z0-9-]{0,61}[a-zA-Z0-9])?(?:\.[a-zA-Z0-9](?:[a-zA-Z0-9-]{0,61}[a-zA-Z0-9])?)*$/,
+                          message: "Please enter a valid email address",
                         },
-                      },
-                      onChange: () => trigger("phone"),
-                    })}
-                    type="tel"
-                    className="w-full pl-10 pr-3 py-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-green-500 focus:border-green-500 transition-colors"
-                    placeholder="Phone Number (Optional)"
-                  />
-                  {errors.phone && (
-                    <p className="mt-1 text-sm text-red-600">
-                      {errors.phone.message}
-                    </p>
-                  )}
-                </div>
-
-                <div className="relative">
-                  <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
-                    <svg
-                      className="h-5 w-5 text-gray-400"
-                      fill="none"
-                      stroke="currentColor"
-                      viewBox="0 0 24 24"
-                    >
-                      <path
-                        strokeLinecap="round"
-                        strokeLinejoin="round"
-                        strokeWidth="2"
-                        d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z"
-                      ></path>
-                    </svg>
-                  </div>
-                  <input
-                    {...register("password", {
-                      required: "Password is required",
-                      minLength: {
-                        value: 8,
-                        message: "Password must be at least 8 characters",
-                      },
-                      maxLength: {
-                        value: 128,
-                        message: "Password cannot exceed 128 characters",
-                      },
-                      pattern: {
-                        value:
-                          /^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)(?=.*[@$!%*?&])[A-Za-z\d@$!%*?&]/,
-                        message:
-                          "Password must contain at least one uppercase letter, one lowercase letter, one number, and one special character (@$!%*?&)",
-                      },
-                      validate: {
-                        notCommon: (value) => {
-                          const commonPasswords = [
-                            "password",
-                            "password123",
-                            "123456",
-                            "qwerty",
-                            "abc123",
-                            "admin",
-                            "letmein",
-                          ];
-                          return (
-                            !commonPasswords.includes(value?.toLowerCase()) ||
-                            "This password is too common. Please choose a more secure password"
-                          );
+                        maxLength: {
+                          value: 254,
+                          message: "Email address is too long",
                         },
-                      },
-                      onChange: () => trigger("password"),
-                    })}
-                    type="password"
-                    className="w-full pl-10 pr-3 py-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-green-500 focus:border-green-500 transition-colors"
-                    placeholder="Password"
-                  />
-                  {errors.password && (
-                    <p className="mt-1 text-sm text-red-600">
-                      {errors.password.message}
-                    </p>
-                  )}
-                </div>
+                        onChange: () => trigger("email"),
+                      })}
+                      type="email"
+                      className="w-full pl-10 pr-3 py-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-green-500 focus:border-green-500 transition-colors"
+                      placeholder="Email"
+                    />
+                  </div>
+                </FormField>
+
+                <FormField label="Phone Number" error={errors.phone?.message}>
+                  <div className="relative">
+                    <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
+                      <svg
+                        className="h-5 w-5 text-gray-400"
+                        fill="none"
+                        stroke="currentColor"
+                        viewBox="0 0 24 24"
+                      >
+                        <path
+                          strokeLinecap="round"
+                          strokeLinejoin="round"
+                          strokeWidth="2"
+                          d="M3 5a2 2 0 012-2h3.28a1 1 0 01.948.684l1.498 4.493a1 1 0 01-.502 1.21l-2.257 1.13a11.042 11.042 0 005.516 5.516l1.13-2.257a1 1 0 011.21-.502l4.493 1.498a1 1 0 01.684.949V19a2 2 0 01-2 2h-1C9.716 21 3 14.284 3 6V5z"
+                        ></path>
+                      </svg>
+                    </div>
+                    <input
+                      {...register("phone", {
+                        pattern: {
+                          value: /^\+?[\d\s\-\(\)\.]+$/,
+                          message: "Please enter a valid phone number",
+                        },
+                        validate: {
+                          length: (value) => {
+                            if (!value) return true; // Optional field
+                            const cleanPhone = value.replace(/\D/g, "");
+                            return (
+                              (cleanPhone.length >= 10 &&
+                                cleanPhone.length <= 15) ||
+                              "Phone number must be between 10 and 15 digits"
+                            );
+                          },
+                        },
+                        onChange: () => trigger("phone"),
+                      })}
+                      type="tel"
+                      className="w-full pl-10 pr-3 py-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-green-500 focus:border-green-500 transition-colors"
+                      placeholder="Phone Number (Optional)"
+                    />
+                  </div>
+                </FormField>
+
+                <FormField label="Password" required error={errors.password?.message}>
+                  <div className="relative">
+                    <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
+                      <svg
+                        className="h-5 w-5 text-gray-400"
+                        fill="none"
+                        stroke="currentColor"
+                        viewBox="0 0 24 24"
+                      >
+                        <path
+                          strokeLinecap="round"
+                          strokeLinejoin="round"
+                          strokeWidth="2"
+                          d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z"
+                        ></path>
+                      </svg>
+                    </div>
+                    <input
+                      {...register("password", {
+                        required: "Password is required",
+                        minLength: {
+                          value: 8,
+                          message: "Password must be at least 8 characters",
+                        },
+                        maxLength: {
+                          value: 128,
+                          message: "Password cannot exceed 128 characters",
+                        },
+                        pattern: {
+                          value:
+                            /^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)(?=.*[@$!%*?&])[A-Za-z\d@$!%*?&]/,
+                          message:
+                            "Password must contain at least one uppercase letter, one lowercase letter, one number, and one special character (@$!%*?&)",
+                        },
+                        validate: {
+                          notCommon: (value) => {
+                            const commonPasswords = [
+                              "password",
+                              "password123",
+                              "123456",
+                              "qwerty",
+                              "abc123",
+                              "admin",
+                              "letmein",
+                            ];
+                            return (
+                              !commonPasswords.includes(value?.toLowerCase()) ||
+                              "This password is too common. Please choose a more secure password"
+                            );
+                          },
+                        },
+                        onChange: () => trigger("password"),
+                      })}
+                      type="password"
+                      className="w-full pl-10 pr-3 py-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-green-500 focus:border-green-500 transition-colors"
+                      placeholder="Password"
+                    />
+                  </div>
+                </FormField>
 
                 {/* Password Strength Indicator */}
                 {password && (
@@ -850,38 +769,35 @@ const Register: React.FC = () => {
                   </div>
                 )}
 
-                <div className="relative">
-                  <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
-                    <svg
-                      className="h-5 w-5 text-gray-400"
-                      fill="none"
-                      stroke="currentColor"
-                      viewBox="0 0 24 24"
-                    >
-                      <path
-                        strokeLinecap="round"
-                        strokeLinejoin="round"
-                        strokeWidth="2"
-                        d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"
-                      ></path>
-                    </svg>
+                <FormField label="Confirm Password" required error={errors.confirmPassword?.message}>
+                  <div className="relative">
+                    <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
+                      <svg
+                        className="h-5 w-5 text-gray-400"
+                        fill="none"
+                        stroke="currentColor"
+                        viewBox="0 0 24 24"
+                      >
+                        <path
+                          strokeLinecap="round"
+                          strokeLinejoin="round"
+                          strokeWidth="2"
+                          d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"
+                        ></path>
+                      </svg>
+                    </div>
+                    <input
+                      {...register("confirmPassword", {
+                        required: "Please confirm your password",
+                        validate: (value) =>
+                          value === password || "Passwords do not match",
+                      })}
+                      type="password"
+                      className="w-full pl-10 pr-3 py-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-green-500 focus:border-green-500 transition-colors"
+                      placeholder="Confirm Password"
+                    />
                   </div>
-                  <input
-                    {...register("confirmPassword", {
-                      required: "Please confirm your password",
-                      validate: (value) =>
-                        value === password || "Passwords do not match",
-                    })}
-                    type="password"
-                    className="w-full pl-10 pr-3 py-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-green-500 focus:border-green-500 transition-colors"
-                    placeholder="Confirm Password"
-                  />
-                  {errors.confirmPassword && (
-                    <p className="mt-1 text-sm text-red-600">
-                      {errors.confirmPassword.message}
-                    </p>
-                  )}
-                </div>
+                </FormField>
               </div>
 
               <button

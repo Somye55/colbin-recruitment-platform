@@ -17,7 +17,6 @@ export interface UserProfile {
   noticePeriod: string;
   noticePeriodDays?: number;
   bio?: string;
-  skills?: string[];
   experience?: string;
   resumeUrl?: string;
   avatar?: string;
@@ -41,7 +40,6 @@ export interface UpdateProfileData {
   noticePeriod?: string;
   noticePeriodDays?: number;
   bio?: string;
-  skills?: string[];
   experience?: string;
   resumeUrl?: string;
   avatar?: string;

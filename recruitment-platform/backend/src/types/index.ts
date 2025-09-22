@@ -4,7 +4,6 @@ import { Request } from 'express';
 
 export interface IUser {
   _id: string;
-  name: string;
   email: string;
   password: string;
   designation: string;
@@ -20,7 +19,6 @@ export interface IUser {
   noticePeriod: string;
   noticePeriodDays?: number;
   bio?: string;
-  skills?: string[];
   experience?: string;
   resumeUrl?: string;
   avatar?: string;
@@ -30,7 +28,6 @@ export interface IUser {
 }
 
 export interface IUserDocument extends Document {
-  name: string;
   email: string;
   password: string;
   designation: string;
@@ -46,7 +43,6 @@ export interface IUserDocument extends Document {
   noticePeriod: string;
   noticePeriodDays?: number;
   bio?: string;
-  skills?: string[];
   experience?: string;
   resumeUrl?: string;
   avatar?: string;
@@ -63,7 +59,6 @@ export interface ILoginRequest {
 }
 
 export interface IRegisterRequest {
-  name: string;
   email: string;
   password: string;
   designation: string;
@@ -90,7 +85,6 @@ export interface IAuthResponse {
   message: string;
   user?: {
     _id: string;
-    name: string;
     email: string;
     designation: string;
     firstName: string;
